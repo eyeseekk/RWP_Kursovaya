@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+
+{% block title %}Главная - Кулинарный блокнот{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="p-5 mb-4 bg-light rounded-3">
+            <div class="container-fluid py-5">
+                <h1 class="display-5 fw-bold">Добро пожаловать в Кулинарный блокнот!</h1>
+                <p class="col-md-8 fs-4">Обменивайтесь рецептами, сохраняйте любимые блюда и вдохновляйтесь новыми идеями.</p>
+                {% if not current_user.is_authenticated %}
+                <a href="{{ url_for('auth.register') }}" class="btn btn-primary btn-lg">Присоединиться</a>
+                {% else %}
+                <a href="{{ url_for('recipes.new') }}" class="btn btn-primary btn-lg">Опубликовать рецепт</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if popular_recipes %}
+<div class="row mt-4">
+    <div class="col-12">
+        <h2 class="border-bottom pb-2">
+            <i class="fas fa-fire text-danger"></i> Популярные рецепты
+        </h2>
+    </div>
+    {% for recipe in popular_recipes %}
+    <div class="col-md-4 col-lg-4 mb-4">
+        <div class="card recipe-card h-100">
+            <img src="{{ url_for('static', filename=recipe.image) }}" class="card-img-top recipe-image" alt="{{ recipe.title }}" onerror="this.src='{{ url_for('static', filename='uploads/recipes/placeholder.png') }}'">
+            <div class="card-body">
+                <h5 class="card-title">{{ recipe.title }}</h5>
+                <p class="card-text text-muted">{{ recipe.description[:100] }}...</p>
+                <div class="mb-2">
+                    <span class="badge bg-secondary">{{ recipe.category.name }}</span>
+                    <span class="badge bg-info"><i class="far fa-clock"></i> {{ recipe.cooking_time }} мин</span>
+                    <span class="badge bg-warning text-dark">
+                        <i class="fas fa-star"></i> {{ "%.1f"|format(recipe.get_rating_avg()) }} ({{ recipe.get_rating_count() }})
+                    </span>
+                </div>
+            </div>
+            <div class="card-footer bg-white">
+                <a href="{{ url_for('recipes.detail', recipe_id=recipe.id) }}" class="btn btn-primary w-100">Смотреть рецепт</a>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+{% if latest_recipes %}
+<div class="row mt-4">
+    <div class="col-12">
+        <h2 class="border-bottom pb-2">
+            <i class="fas fa-clock"></i> Новые рецепты
+        </h2>
+    </div>
+    {% for recipe in latest_recipes %}
+    <div class="col-md-4 col-lg-4 mb-4">
+        <div class="card recipe-card h-100">
+            <img src="{{ url_for('static', filename=recipe.image) }}" class="card-img-top recipe-image" alt="{{ recipe.title }}" onerror="this.src='{{ url_for('static', filename='uploads/recipes/placeholder.png') }}'">
+            <div class="card-body">
+                <h5 class="card-title">{{ recipe.title }}</h5>
+                <p class="card-text text-muted">{{ recipe.description[:100] }}...</p>
+                <div class="mb-2">
+                    <span class="badge bg-secondary">{{ recipe.category.name }}</span>
+                    <span class="badge bg-info"><i class="far fa-clock"></i> {{ recipe.cooking_time }} мин</span>
+                </div>
+            </div>
+            <div class="card-footer bg-white">
+                <a href="{{ url_for('recipes.detail', recipe_id=recipe.id) }}" class="btn btn-outline-primary w-100">Смотреть рецепт</a>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+{% endblock %}

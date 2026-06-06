@@ -1,0 +1,196 @@
+{% extends "base.html" %}
+
+{% block title %}{{ recipe.title }} - Кулинарный блокнот{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('main.index') }}">Главная</a></li>
+                <li class="breadcrumb-item"><a href="{{ url_for('main.search') }}?category={{ recipe.category_id }}">{{ recipe.category.name }}</a></li>
+                <li class="breadcrumb-item active">{{ recipe.title }}</li>
+            </ol>
+        </nav>
+
+        <h1 class="mb-3">{{ recipe.title }}</h1>
+
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <div>
+                <span class="text-muted">
+                    <i class="fas fa-user"></i> {{ recipe.author.username }}
+                    <i class="fas fa-calendar-alt ms-2"></i> {{ recipe.created_at.strftime('%d.%m.%Y') }}
+                    <i class="fas fa-eye ms-2"></i> {{ recipe.views_count }} просмотров
+                </span>
+            </div>
+            <div class="rating-stars">
+                {% set avg_rating = recipe.get_rating_avg() %}
+                {% for i in range(5) %}
+                    {% if i < avg_rating|round(0, 'floor') %}
+                        <i class="fas fa-star"></i>
+                    {% elif i < avg_rating %}
+                        <i class="fas fa-star-half-alt"></i>
+                    {% else %}
+                        <i class="far fa-star"></i>
+                    {% endif %}
+                {% endfor %}
+                <span class="text-muted">({{ recipe.get_rating_count() }} оценок)</span>
+            </div>
+        </div>
+
+        <img src="{{ url_for('static', filename=recipe.image) }}" class="img-fluid rounded mb-4" alt="{{ recipe.title }}" style="max-height: 400px; width: 100%; object-fit: cover;" onerror="this.src='{{ url_for('static', filename='uploads/recipes/placeholder.png') }}'">
+
+        <div class="mb-4">
+            <h4><i class="fas fa-info-circle"></i> Описание</h4>
+            <p>{{ recipe.description }}</p>
+        </div>
+
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <h4><i class="fas fa-list"></i> Ингредиенты</h4>
+                <div class="bg-light p-3 rounded">
+                    {{ recipe.ingredients|replace('\n', '<br>')|safe }}
+                </div>
+            </div>
+            <div class="col-md-6">
+                <h4><i class="fas fa-chart-line"></i> Параметры</h4>
+                <ul class="list-group">
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        Время приготовления
+                        <span class="badge bg-primary rounded-pill">{{ recipe.cooking_time }} мин</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        Сложность
+                        <span class="badge bg-secondary rounded-pill">
+                            {% if recipe.difficulty == 'easy' %}Легко
+                            {% elif recipe.difficulty == 'medium' %}Средне
+                            {% else %}Сложно{% endif %}
+                        </span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        Категория
+                        <span class="badge bg-info rounded-pill">{{ recipe.category.name }}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        Автор
+                        <span>{{ recipe.author.username }}</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="mb-4">
+            <h4><i class="fas fa-utensils"></i> Приготовление</h4>
+            <div class="bg-light p-3 rounded">
+                {{ recipe.steps|replace('\n', '<br>')|safe }}
+            </div>
+        </div>
+
+        {% if current_user.is_authenticated %}
+        <div class="btn-group mb-4">
+            <form action="{{ url_for('recipes.toggle_favorite', recipe_id=recipe.id) }}" method="post" class="me-2">
+                <button type="submit" class="btn btn-outline-danger">
+                    {% if is_favorited %}
+                        <i class="fas fa-heart"></i> В избранном
+                    {% else %}
+                        <i class="far fa-heart"></i> В избранное
+                    {% endif %}
+                </button>
+            </form>
+
+            <form action="{{ url_for('recipes.export_pdf', recipe_id=recipe.id) }}" method="get" class="me-2">
+                <button type="submit" class="btn btn-outline-secondary">
+                    <i class="fas fa-file-pdf"></i> Сохранить в PDF
+                </button>
+            </form>
+
+            {% if recipe.user_id == current_user.id or current_user.is_admin() %}
+                <a href="{{ url_for('recipes.edit', recipe_id=recipe.id) }}" class="btn btn-outline-primary me-2">
+                    <i class="fas fa-edit"></i> Редактировать
+                </a>
+                <form action="{{ url_for('recipes.delete', recipe_id=recipe.id) }}" method="post" onsubmit="return confirm('Вы уверены?')">
+                    <button type="submit" class="btn btn-outline-danger">
+                        <i class="fas fa-trash"></i> Удалить
+                    </button>
+                </form>
+            {% endif %}
+        </div>
+        {% endif %}
+
+        <!-- Комментарии -->
+        <div class="mt-5">
+            <h4><i class="fas fa-comments"></i> Комментарии ({{ comments|length }})</h4>
+
+            {% if current_user.is_authenticated %}
+            <div class="card mb-4">
+                <div class="card-body">
+                    <form method="post" action="{{ url_for('recipes.add_comment', recipe_id=recipe.id) }}">
+                        {{ form.hidden_tag() }}
+                        <div class="mb-3">
+                            {{ form.content.label(class="form-label") }}
+                            {{ form.content(class="form-control", rows=3) }}
+                        </div>
+                        <div class="mb-3">
+                            {{ form.rating.label(class="form-label") }}
+                            {{ form.rating(class="form-select") }}
+                        </div>
+                        {{ form.submit(class="btn btn-primary") }}
+                    </form>
+                </div>
+            </div>
+            {% else %}
+            <div class="alert alert-info">
+                <a href="{{ url_for('auth.login') }}">Войдите</a>, чтобы оставить комментарий.
+            </div>
+            {% endif %}
+
+            {% for comment in comments %}
+            <div class="card mb-3">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <strong>
+                                <i class="fas fa-user-circle"></i> {{ comment.author.username }}
+                            </strong>
+                            <small class="text-muted ms-2">{{ comment.created_at.strftime('%d.%m.%Y %H:%M') }}</small>
+                            {% if comment.rating %}
+                            <div class="rating-stars ms-2 d-inline-block">
+                                {% for i in range(5) %}
+                                    {% if i < comment.rating %}
+                                        <i class="fas fa-star text-warning"></i>
+                                    {% else %}
+                                        <i class="far fa-star text-warning"></i>
+                                    {% endif %}
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+                        {% if current_user.is_authenticated and (comment.user_id == current_user.id or current_user.is_admin()) %}
+                        <form action="{{ url_for('recipes.delete_comment', comment_id=comment.id) }}" method="post">
+                            <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Удалить комментарий?')">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </form>
+                        {% endif %}
+                    </div>
+                    <p class="mt-2 mb-0">{{ comment.content }}</p>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <i class="fas fa-info-circle"></i> Об авторе
+            </div>
+            <div class="card-body text-center">
+                <img src="{{ url_for('static', filename=recipe.author.avatar) }}" class="rounded-circle mb-3" style="width: 100px; height: 100px; object-fit: cover;" onerror="this.src='{{ url_for('static', filename='uploads/avatars/default.png') }}'">
+                <h5>{{ recipe.author.username }}</h5>
+                <p class="text-muted">Рецептов: {{ recipe.author.recipes|length }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

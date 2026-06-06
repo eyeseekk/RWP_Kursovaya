@@ -1,0 +1,21 @@
+/* Дополнительные стили при необходимости */
+.recipe-image {
+    height: 200px;
+    object-fit: cover;
+}
+
+.rating-stars {
+    color: #f39c12;
+}
+
+.navbar-brand i {
+    margin-right: 8px;
+}
+
+.card {
+    transition: transform 0.2s;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+}

@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>{{ recipe.title }}</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 2cm;
+        }
+        
+        body {
+            font-family: 'DejaVu Sans', 'Arial', sans-serif;
+            font-size: 12pt;
+            line-height: 1.5;
+            color: #000000;
+        }
+        
+        h1 {
+            font-size: 24pt;
+            color: #e67e22;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        h2 {
+            font-size: 18pt;
+            color: #2c3e50;
+            border-bottom: 2px solid #e67e22;
+            padding-bottom: 5px;
+            margin-top: 20px;
+        }
+        
+        .info {
+            background-color: #f5f5f5;
+            padding: 10px;
+            border: 1px solid #ddd;
+            margin-bottom: 20px;
+        }
+        
+        .info p {
+            margin: 5px 0;
+        }
+        
+        .footer {
+            margin-top: 40px;
+            text-align: center;
+            font-size: 10pt;
+            color: #7f8c8d;
+            border-top: 1px solid #ddd;
+            padding-top: 10px;
+        }
+        
+        .preserve-line {
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+    <h1>{{ recipe.title }}</h1>
+    
+    <div class="info">
+        <p><strong>Время приготовления:</strong> {{ recipe.cooking_time }} минут</p>
+        <p><strong>Сложность:</strong> 
+            {% if recipe.difficulty == 'easy' %}Легко
+            {% elif recipe.difficulty == 'medium' %}Средне
+            {% else %}Сложно{% endif %}
+        </p>
+        <p><strong>Автор:</strong> {{ recipe.author.username }}</p>
+        <p><strong>Дата публикации:</strong> {{ recipe.created_at.strftime('%d.%m.%Y') }}</p>
+    </div>
+    
+    <h2>Ингредиенты</h2>
+    <div class="preserve-line">{{ recipe.ingredients }}</div>
+    
+    <h2>Приготовление</h2>
+    <div class="preserve-line">{{ recipe.steps }}</div>
+    
+    <div class="footer">
+        <p>Рецепт сгенерирован платформой «Кулинарный блокнот»</p>
+    </div>
+</body>
+</html>

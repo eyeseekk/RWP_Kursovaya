@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+
+{% block title %}Поиск - Кулинарный блокнот{% endblock %}
+
+{% block content %}
+<h1 class="mb-4"><i class="fas fa-search"></i> Результаты поиска</h1>
+
+<div class="row">
+    <div class="col-md-3">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <i class="fas fa-filter"></i> Фильтры
+            </div>
+            <div class="card-body">
+                <form method="get">
+                    <input type="hidden" name="q" value="{{ query }}">
+
+                    <div class="mb-3">
+                        <label class="form-label">Категория</label>
+                        <select name="category" class="form-select">
+                            <option value="0">Все категории</option>
+                            {% for cat in categories %}
+                            <option value="{{ cat.id }}" {% if request.args.get('category')|int == cat.id %}selected{% endif %}>{{ cat.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Сложность</label>
+                        <select name="difficulty" class="form-select">
+                            <option value="">Любая</option>
+                            <option value="easy" {% if request.args.get('difficulty') == 'easy' %}selected{% endif %}>Легко</option>
+                            <option value="medium" {% if request.args.get('difficulty') == 'medium' %}selected{% endif %}>Средне</option>
+                            <option value="hard" {% if request.args.get('difficulty') == 'hard' %}selected{% endif %}>Сложно</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Время приготовления (мин)</label>
+                        <div class="row">
+                            <div class="col-6">
+                                <input type="number" name="min_time" class="form-control" placeholder="от" value="{{ request.args.get('min_time', '') }}">
+                            </div>
+                            <div class="col-6">
+                                <input type="number" name="max_time" class="form-control" placeholder="до" value="{{ request.args.get('max_time', '') }}">
+                            </div>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary w-100">Применить</button>
+                    <a href="{{ url_for('main.search') }}" class="btn btn-secondary w-100 mt-2">Сбросить</a>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-9">
+        {% if query %}
+        <p class="text-muted">По запросу "{{ query }}" найдено {{ recipes|length }} рецептов</p>
+        {% endif %}
+
+        {% if recipes %}
+        <div class="row">
+            {% for recipe in recipes %}
+            <div class="col-md-6 col-lg-4 mb-4">
+                <div class="card recipe-card h-100">
+                    <img src="{{ url_for('static', filename=recipe.image) }}" class="card-img-top recipe-image" alt="{{ recipe.title }}" onerror="this.src='{{ url_for('static', filename='uploads/recipes/placeholder.png') }}'">
+                    <div class="card-body">
+                        <h5 class="card-title">{{ recipe.title }}</h5>
+                        <p class="card-text text-muted">{{ recipe.description[:80] }}...</p>
+                        <div class="rating-stars mb-2">
+                            {% set avg = recipe.get_rating_avg() %}
+                            {% for i in range(5) %}
+                                {% if i < avg|round(0, 'floor') %}
+                                    <i class="fas fa-star"></i>
+                                {% elif i < avg %}
+                                    <i class="fas fa-star-half-alt"></i>
+                                {% else %}
+                                    <i class="far fa-star"></i>
+                                {% endif %}
+                            {% endfor %}
+                            <span class="text-muted">({{ recipe.get_rating_count() }})</span>
+                        </div>
+                    </div>
+                    <div class="card-footer bg-white">
+                        <a href="{{ url_for('recipes.detail', recipe_id=recipe.id) }}" class="btn btn-outline-primary w-100">Подробнее</a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="text-center py-5">
+            <i class="fas fa-search fa-4x text-muted mb-3"></i>
+            <h3>Ничего не найдено</h3>
+            <p class="text-muted">Попробуйте изменить параметры поиска</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
